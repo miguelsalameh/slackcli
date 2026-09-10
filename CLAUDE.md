@@ -151,6 +151,7 @@ Browser tokens can be captured two ways: pasting a cURL command from DevTools (`
 | `src/lib/interactive-input.ts` | Multi-line terminal input (double-Enter or Ctrl+D to submit) |
 | `src/lib/saved.ts` | Enriches saved-for-later items (resolves messages & channels) |
 | `src/lib/unread.ts` | Fetches and resolves unread channel data |
+| `src/lib/watch.ts` | Read-only live message stream over `rtm.connect` websocket (filters, cached name resolution, reconnect); only calls the methods in `WATCH_READ_METHODS` |
 | `src/lib/emoji.ts` | Normalizes the custom-emoji map (originals vs. aliases) |
 | `src/lib/usergroups.ts` | Normalizes user groups, resolves members, read-modify-write membership |
 | `src/lib/updater.ts` | Self-update via GitHub releases |

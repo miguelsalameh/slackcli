@@ -5,11 +5,14 @@ import { getAuthenticatedClient } from '../lib/auth.ts';
 import { error, formatChannelList, formatConversationHistory, formatUnreadChannels, warning, writeJson } from '../lib/formatter.ts';
 import { fetchMessage } from '../lib/message.ts';
 import { fetchUnreadChannels } from '../lib/unread.ts';
+import { formatWatchLine, watchMessages } from '../lib/watch.ts';
 import {
+  normalizeIdentifier,
   normalizeTimestamp,
   resolveMessageTarget,
   resolveThreadTarget,
   workspaceMismatchWarning,
+  workspaceOf,
 } from '../lib/slack-url-parser.ts';
 import type { SlackClient } from '../lib/slack-client.ts';
 import type { SlackChannel, SlackMessage, SlackUser } from '../types/index.ts';
@@ -19,6 +22,14 @@ import type { SlackChannel, SlackMessage, SlackUser } from '../types/index.ts';
 function warnOnWorkspaceMismatch(client: SlackClient, linkWorkspace: string | undefined): void {
   const message = workspaceMismatchWarning(linkWorkspace, client.workspaceHost);
   if (message) warning(message);
+}
+
+// rtm.connect refuses modern app tokens; say so instead of echoing Slack's code.
+function watchHint(message: string): string | undefined {
+  if (message.includes('not_allowed_token_type') || message.includes('invalid_auth')) {
+    return 'Live watching needs browser-session credentials. Run "slackcli auth login-auto" or "slackcli auth login-browser".';
+  }
+  return undefined;
 }
 
 export function createConversationsCommand(): Command {
@@ -325,6 +336,73 @@ export function createConversationsCommand(): Command {
       } catch (err: any) {
         spinner.fail('Failed to fetch message');
         error(err.message);
+        process.exit(1);
+      }
+    });
+
+  // Stream live messages over the RTM websocket (read-only)
+  const collect = (value: string, previous: string[]) => [...previous, value];
+  conversations
+    .command('watch')
+    .description('Stream new messages live over a websocket (read-only; browser auth). Ctrl-C to stop')
+    .option('--duration <seconds>', 'Stop after this many seconds (default: run until Ctrl-C)')
+    .option('--channel <id>', 'Only this channel ID or Slack URL (repeatable)', collect, [])
+    .option('--from <id>', 'Only this sender: a user (U…) or bot (B…) ID, or a user URL (repeatable)', collect, [])
+    .option('--bots', 'Only messages posted by bots', false)
+    .option('--include-subtypes', 'Also show edits, deletions, joins and other message subtypes', false)
+    .option('--workspace <id|name>', 'Workspace to use')
+    .option('--json', 'One JSON object per line (NDJSON) with resolved names', false)
+    .action(async (options) => {
+      const spinner = ora('Connecting...').start();
+
+      try {
+        const channels = (options.channel as string[]).map((c) => normalizeIdentifier(c, 'channel', '--channel'));
+        const from = (options.from as string[]).map((f) => normalizeIdentifier(f, 'user', '--from'));
+        const duration = options.duration === undefined ? undefined : Number(options.duration);
+        if (duration !== undefined && !(duration > 0)) {
+          throw new Error('--duration must be a positive number of seconds');
+        }
+
+        const client = await getAuthenticatedClient(options.workspace);
+        for (const input of options.channel as string[]) {
+          warnOnWorkspaceMismatch(client, workspaceOf(input));
+        }
+
+        const controller = new AbortController();
+        const onInterrupt = () => controller.abort();
+        process.once('SIGINT', onInterrupt);
+        process.once('SIGTERM', onInterrupt);
+
+        let connected = false;
+        await watchMessages(client, {
+          filters: { channels, from, botsOnly: options.bots, includeSubtypes: options.includeSubtypes },
+          durationMs: duration === undefined ? undefined : duration * 1000,
+          signal: controller.signal,
+          onConnected: () => {
+            if (connected) {
+              console.error(chalk.dim('Reconnected.'));
+              return;
+            }
+            connected = true;
+            spinner.succeed('Connected. Watching for messages (read-only) — Ctrl-C to stop.');
+          },
+          onStatus: warning,
+          onEvent: (event) => {
+            if (options.json) {
+              process.stdout.write(JSON.stringify(event) + '\n');
+            } else {
+              console.log(formatWatchLine(event));
+            }
+          },
+        });
+
+        process.off('SIGINT', onInterrupt);
+        process.off('SIGTERM', onInterrupt);
+        console.error(chalk.dim('Stopped watching.')); // stderr: stdout is the event stream
+      } catch (err: any) {
+        spinner.fail('Failed to watch conversations');
+        const hint = watchHint(err.message);
+        error(err.message, hint);
         process.exit(1);
       }
     });

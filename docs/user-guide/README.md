@@ -22,7 +22,7 @@ list for the version you have installed.
 | Group | What it does |
 |---|---|
 | `auth` | Sign in, list/select/remove workspaces, extract tokens |
-| `conversations` | List channels and DMs, read history and threads, unreads |
+| `conversations` | List channels and DMs, read history and threads, unreads, watch live |
 | `messages` | Send, reply, edit, react, draft, attach files, Block Kit |
 | `search` | Search messages, channels, and people |
 | `team` | Read the workspace's own name, domain, and ID |

@@ -88,6 +88,7 @@ endpoints. Each divergence is one method, and each is a deliberate trade:
 | `searchModules` | `search.modules` | list + client-side filter (capped at 1000) |
 | `getUnreadCounts` | `client.counts` | `conversations.list` unread fields |
 | `fetchMessage` (`src/lib/message.ts`) | `messages.list` — resolves replies too | `conversations.history` — top-level only |
+| `watchMessages` (`src/lib/watch.ts`) | `rtm.connect` + websocket with the `d` cookie on the upgrade | `rtm.connect` refuses modern app tokens (`not_allowed_token_type`) — the command explains how to sign in with browser auth |
 
 When you add a feature that only one auth type can support, follow this shape:
 implement the capable path, degrade or fail loudly on the other, and say so in

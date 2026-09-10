@@ -15,6 +15,9 @@ The writing commands support it too — `messages send`, `messages edit`,
 `remove`, `enable`, `disable`) — where it returns the identity of what was just
 written instead of the human success line.
 
+`conversations watch --json` is the one streaming command: it writes **one JSON
+object per line** (NDJSON) as events arrive, rather than a single document.
+
 JSON goes to **stdout**. Progress spinners, warnings, error messages, and the
 update-available notice go to **stderr**, so a pipe normally carries only data:
 
@@ -44,6 +47,9 @@ slackcli conversations unread --json | jq '.unread_channels[] | select(.mention_
 
 # A canvas as Markdown
 slackcli canvas read F123 --json | jq -r '.markdown' > canvas.md
+
+# Live messages, one JSON line each (read-only)
+slackcli conversations watch --json | jq -r '"\(.channel_name)\t\(.user_name)\t\(.text)"'
 ```
 
 `--json` output for messages includes `ts`, `thread_ts`, `user`, `text`, `type`,

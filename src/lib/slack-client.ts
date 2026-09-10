@@ -393,6 +393,29 @@ export class SlackClient {
     return this.request('users.list', params);
   }
 
+  // Bot profile lookup, used to turn a `B…` id on a message into a name.
+  async getBotInfo(botId: string): Promise<any> {
+    return this.request('bots.info', { bot: botId });
+  }
+
+  // Open a live event stream. rtm.connect hands back a one-shot websocket URL;
+  // the caller connects with `websocketHeaders()` so the session cookie travels
+  // on the upgrade too. Standard xoxb/xoxp app tokens are refused by Slack here
+  // (`not_allowed_token_type`) — this path is for browser-session credentials.
+  async rtmConnect(): Promise<any> {
+    return this.request('rtm.connect', {});
+  }
+
+  // Headers a websocket upgrade needs in addition to the URL: browser auth must
+  // present the `d` cookie, standard auth carries everything in the URL token.
+  websocketHeaders(): Record<string, string> {
+    if (this.config.auth_type !== 'browser') return {};
+    return {
+      'Cookie': `d=${encodeURIComponent(this.config.xoxd_token)}`,
+      'Origin': 'https://app.slack.com',
+    };
+  }
+
   // Get conversation info
   async getConversationInfo(channel: string): Promise<any> {
     return this.request('conversations.info', { channel });

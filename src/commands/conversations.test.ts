@@ -45,3 +45,25 @@ describe('conversations command', () => {
     expect(jsonOption?.defaultValue).toBe(false);
   });
 });
+
+describe('conversations watch', () => {
+  it('exposes the filter, duration and json options', () => {
+    expect(longOptions('watch')).toEqual(expect.arrayContaining([
+      '--duration', '--channel', '--from', '--bots', '--include-subtypes', '--workspace', '--json',
+    ]));
+  });
+
+  it('makes --channel and --from repeatable, defaulting to empty', () => {
+    for (const flag of ['--channel', '--from']) {
+      const option = subcommand('watch')?.options.find((o) => o.long === flag);
+      expect(option?.defaultValue).toEqual([]);
+      expect(option?.variadic).toBe(false);
+    }
+  });
+
+  it('defaults --bots, --include-subtypes and --json to off', () => {
+    for (const flag of ['--bots', '--include-subtypes', '--json']) {
+      expect(subcommand('watch')?.options.find((o) => o.long === flag)?.defaultValue).toBe(false);
+    }
+  });
+});
