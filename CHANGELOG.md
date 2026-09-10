@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Live message stream** (`conversations watch`): follow new messages as they arrive over Slack's `rtm.connect` websocket instead of polling `read`/`unread` on a timer. Uses the same browser-session credentials as every other command (`xoxc` token, `xoxd` cookie) — no Slack app, Socket Mode, or admin approval
+  - One line per message with local time, channel (DMs show the other party, bot ids resolve via `bots.info`), sender, and subtype tag; thread replies show their parent on an indented line
+  - Filters: `--channel` (repeatable, accepts Slack URLs), `--from` (user or bot ids), `--bots`, `--include-subtypes`; `--duration <seconds>`; `--json` for one object per line with resolved `channel_name`, `user_name`, `ts_iso`, `parent`
+  - Strictly read-only — the only API methods it calls are `rtm.connect`, `conversations.info`, `users.info`, `bots.info`, and `conversations.history`, enforced by a test; unread state is never touched
+  - Reconnects with backoff when the socket drops; `xoxb`/`xoxp` app tokens are refused by `rtm.connect`
+
 ### Fixed
 - **Slack API calls are throttled**: every request now goes through a process-wide rate limiter — at most 2 in flight, with at least 200ms between calls — for both standard and browser-session authentication (#147)
   - Unthrottled bursts (one `users.info` per user, one `conversations.info` per channel) could trip Slack's `unexpected_api_call_volume` anomaly detection, which on Enterprise Grid signs the browser session out

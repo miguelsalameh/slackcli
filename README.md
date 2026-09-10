@@ -156,6 +156,7 @@ slackcli messages send --permalink="$LINK" --message="On it 👀"
 |---|---|---|
 | See what I missed | `slackcli conversations unread` | [conversations](docs/user-guide/conversations.md) |
 | Read a channel or a thread | `slackcli conversations read C123 --limit=50` | [conversations](docs/user-guide/conversations.md) |
+| Watch messages arrive live (read-only) | `slackcli conversations watch --channel=C123` | [conversations](docs/user-guide/conversations.md) |
 | Send, reply, edit, or react | `slackcli messages send --permalink="$LINK" --message="…"` | [messages](docs/user-guide/messages.md) |
 | Search the workspace | `slackcli search messages "release notes"` | [search](docs/user-guide/search.md) |
 | Find a channel or a person | `slackcli search people "ada"` | [search](docs/user-guide/search.md) |
@@ -279,7 +280,7 @@ for the version you have installed.
 </details>
 
 <details>
-<summary><code>conversations</code> — channels, DMs, threads, unreads</summary>
+<summary><code>conversations</code> — channels, DMs, threads, unreads, live watch</summary>
 
 <br>
 
@@ -289,6 +290,7 @@ slackcli conversations read C1234567890 --limit=50
 slackcli conversations read --permalink="$LINK"          # reads that message's thread
 slackcli conversations get C1234567890 1234567890.123456
 slackcli conversations unread
+slackcli conversations watch --bots --json                # live stream, read-only
 ```
 
 📄 [conversations](docs/user-guide/conversations.md)

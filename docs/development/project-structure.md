@@ -35,7 +35,7 @@ They hold no Slack API knowledge.
 |---|---|
 | `auth.ts` | `login`, `login-browser`, `login-auto`, `list`, `set-default`, `remove`, `logout`, `extract-tokens`, `parse-curl` |
 | `canvas.ts` | `list`, `read` |
-| `conversations.ts` | `list`, `read`, `get`, `unread` |
+| `conversations.ts` | `list`, `read`, `get`, `unread`, `watch` |
 | `messages.ts` | `send`, `react`, `edit`, `draft` |
 | `saved.ts` | `list` |
 | `search.ts` | `messages`, `channels`, `people` |
@@ -57,6 +57,7 @@ They hold no Slack API knowledge.
 | `canvas-parser.ts` | Slack canvas HTML → Markdown. |
 | `rate-limiter.ts` | Concurrency cap and minimum interval shared by every Slack API call. |
 | `message.ts` | Fetch one message by channel + timestamp, per auth type. |
+| `watch.ts` | Read-only live message stream over the `rtm.connect` websocket: filters, name resolution, reconnect. The socket is a seam (`OpenWatchSocket`) so it tests without a network. |
 | `saved.ts` | Resolves saved-item pointers into messages, channels, and users. |
 | `unread.ts` | Fetches and normalises unread channel data across both auth types. |
 | `formatter.ts` | Chalk-coloured renderers, status helpers, and `writeJson()`. |
