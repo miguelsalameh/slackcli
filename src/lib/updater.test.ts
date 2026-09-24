@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'bun:test';
-import { isNewerVersion, isInstalledViaHomebrew, getUpdateCommand, getCurrentVersion, performUpdate, verifyAssetDigest } from './updater.ts';
+import { isNewerVersion, isInstalledViaHomebrew, getUpdateCommand, getCurrentVersion, performUpdate, verifyAssetDigest, isUpdateCheckDisabled } from './updater.ts';
 import { createHash } from 'crypto';
 import { mkdtemp, readFile, readdir, rm, writeFile } from 'fs/promises';
 import { tmpdir } from 'os';
@@ -215,5 +215,25 @@ describe('performUpdate integrity check', () => {
 
     expect(await readFile(installed, 'utf-8')).toBe('THE NEW BINARY');
     expect(after.length).toBe(before.length);
+  });
+});
+
+describe('isUpdateCheckDisabled', () => {
+  it('is off when SLACKCLI_NO_UPDATE_CHECK is unset or empty', () => {
+    expect(isUpdateCheckDisabled({})).toBe(false);
+    expect(isUpdateCheckDisabled({ SLACKCLI_NO_UPDATE_CHECK: '' })).toBe(false);
+    expect(isUpdateCheckDisabled({ SLACKCLI_NO_UPDATE_CHECK: '  ' })).toBe(false);
+  });
+
+  it('treats 0 and false as not disabling', () => {
+    expect(isUpdateCheckDisabled({ SLACKCLI_NO_UPDATE_CHECK: '0' })).toBe(false);
+    expect(isUpdateCheckDisabled({ SLACKCLI_NO_UPDATE_CHECK: 'false' })).toBe(false);
+    expect(isUpdateCheckDisabled({ SLACKCLI_NO_UPDATE_CHECK: 'FALSE' })).toBe(false);
+  });
+
+  it('is on for any other value', () => {
+    expect(isUpdateCheckDisabled({ SLACKCLI_NO_UPDATE_CHECK: '1' })).toBe(true);
+    expect(isUpdateCheckDisabled({ SLACKCLI_NO_UPDATE_CHECK: 'true' })).toBe(true);
+    expect(isUpdateCheckDisabled({ SLACKCLI_NO_UPDATE_CHECK: 'yes' })).toBe(true);
   });
 });

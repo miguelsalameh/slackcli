@@ -45,6 +45,9 @@ slackcli search messages "deploy failed" --json | jq -r '.matches[] | "\(.channe
 # Unread channels that have mentions
 slackcli conversations unread --json | jq '.unread_channels[] | select(.mention_count > 0)'
 
+# Just the unread messages in one channel
+slackcli conversations read C1234567890 --unread --json
+
 # A canvas as Markdown
 slackcli canvas read F123 --json | jq -r '.markdown' > canvas.md
 

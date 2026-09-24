@@ -85,6 +85,8 @@ Two cases where `slackcli update` deliberately does nothing:
 SlackCLI also checks for new releases in the background at most once every 24
 hours and prints a one-line notice after your command's output when a newer
 version exists. The result is cached in `~/.config/slackcli/update-check.json`.
+Set `SLACKCLI_NO_UPDATE_CHECK=1` to turn off both the check and the notice, for
+example in scripts or CI (`0`, `false`, and an empty value leave it on).
 
 ## Uninstalling
 

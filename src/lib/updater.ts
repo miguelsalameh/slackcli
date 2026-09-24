@@ -260,11 +260,18 @@ export function getUpdateCommand(): string {
   return isInstalledViaHomebrew() ? 'brew upgrade slackcli' : 'slackcli update';
 }
 
+// True when SLACKCLI_NO_UPDATE_CHECK is set to anything but an empty/false-y value.
+export function isUpdateCheckDisabled(env: NodeJS.ProcessEnv = process.env): boolean {
+  const value = env.SLACKCLI_NO_UPDATE_CHECK?.trim().toLowerCase();
+  return !!value && value !== '0' && value !== 'false';
+}
+
 // Show a one-line update notification after the command finishes (via beforeExit),
 // and refresh the cache in the background if it is stale.
 export function notifyIfUpdateAvailable(): void {
   // Local `bun run` / source checkout — not a release binary; skip self-update nags.
-  if (isRunningUnderBun()) {
+  // SLACKCLI_NO_UPDATE_CHECK opts out for scripts and CI that parse stderr.
+  if (isRunningUnderBun() || isUpdateCheckDisabled()) {
     return;
   }
 
