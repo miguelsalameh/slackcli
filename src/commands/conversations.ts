@@ -4,7 +4,7 @@ import ora from 'ora';
 import { getAuthenticatedClient } from '../lib/auth.ts';
 import { error, formatChannelList, formatConversationHistory, formatUnreadChannels, warning, writeJson } from '../lib/formatter.ts';
 import { fetchMessage } from '../lib/message.ts';
-import { fetchUnreadChannels } from '../lib/unread.ts';
+import { fetchUnreadChannels, resolveUnreadOldest } from '../lib/unread.ts';
 import { formatWatchLine, watchMessages } from '../lib/watch.ts';
 import {
   normalizeIdentifier,
@@ -138,6 +138,7 @@ export function createConversationsCommand(): Command {
     .option('--limit <number>', 'Number of messages to return', '100')
     .option('--oldest <timestamp>', 'Start of time range')
     .option('--latest <timestamp>', 'End of time range')
+    .option('--unread', 'Only messages after your last-read marker (sets --oldest from conversations.info)', false)
     .option('--workspace <id|name>', 'Workspace to use')
     .option('--json', 'Output in JSON format (includes timestamps for replies)', false)
     .action(async (channelIdArg, options) => {
@@ -149,11 +150,15 @@ export function createConversationsCommand(): Command {
           { channel: '<channel-id>', timestamp: '--thread-ts' }
         );
         const channelId = target.channelId;
-        const oldest = options.oldest ? normalizeTimestamp(options.oldest, '--oldest') : undefined;
+        let oldest = options.oldest ? normalizeTimestamp(options.oldest, '--oldest') : undefined;
         const latest = options.latest ? normalizeTimestamp(options.latest, '--latest') : undefined;
 
         const client = await getAuthenticatedClient(options.workspace);
         warnOnWorkspaceMismatch(client, target.workspace);
+
+        if (options.unread) {
+          oldest = await resolveUnreadOldest(client, channelId, { oldest, threadTs: target.threadTs });
+        }
 
         let response: any;
         let messages: SlackMessage[];

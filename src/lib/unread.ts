@@ -24,6 +24,7 @@ export async function fetchUnreadChannels(
         id: ch.id,
         mention_count: ch.mention_count || 0,
         has_unreads: ch.has_unreads || false,
+        ...(ch.last_read ? { last_read: String(ch.last_read) } : {}),
       }));
 
     // Resolve channel names in parallel
@@ -74,4 +75,20 @@ export async function fetchUnreadChannels(
   });
 
   return channels;
+}
+
+// Resolve the --oldest bound for `conversations read --unread`: the user's
+// last-read marker on the channel. Slack treats `oldest` as exclusive, so the
+// already-read message itself is not returned.
+export async function resolveUnreadOldest(
+  client: Pick<SlackClient, 'getConversationInfo'>,
+  channelId: string,
+  options: { oldest?: string; threadTs?: string } = {},
+): Promise<string> {
+  if (options.oldest) throw new Error('--unread and --oldest are mutually exclusive');
+  // last_read is a channel-level marker; threads track read state separately.
+  if (options.threadTs) throw new Error('--unread cannot be combined with a thread (--thread-ts or a thread permalink)');
+  const lastRead = (await client.getConversationInfo(channelId))?.channel?.last_read;
+  if (!lastRead) throw new Error('Slack returned no last_read marker for this conversation');
+  return String(lastRead);
 }

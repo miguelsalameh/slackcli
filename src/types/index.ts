@@ -219,6 +219,8 @@ export interface UnreadChannel {
   mention_count: number;
   unread_count?: number;
   has_unreads: boolean;
+  /** Timestamp of the last message the user read; pass as --oldest to read only unread. */
+  last_read?: string;
   is_im?: boolean;
   is_mpim?: boolean;
   is_private?: boolean;

@@ -50,6 +50,9 @@ slackcli conversations read C1234567890 --exclude-replies
 # A time window
 slackcli conversations read C1234567890 --oldest=1735689600 --latest=1738368000
 
+# Only what you have not read yet
+slackcli conversations read C1234567890 --unread
+
 # Machine-readable
 slackcli conversations read C1234567890 --json
 ```
@@ -61,11 +64,17 @@ slackcli conversations read C1234567890 --json
 | `--exclude-replies` | off | Drop threaded replies from channel history |
 | `--limit <number>` | `100` | How many messages |
 | `--oldest` / `--latest` | — | Time range bounds |
+| `--unread` | off | Only messages after your last-read marker |
 | `--json` | off | JSON output, including `ts` and `thread_ts` |
 
 Channel history comes back newest-first from Slack and is reversed so you read
 top to bottom. Thread replies are already chronological. `--json` also includes
 reactions, blocks, attachments, file metadata, and a resolved `users` array.
+
+`--unread` looks up your last-read marker with `conversations.info` and uses it
+as `--oldest`, so it cannot be combined with `--oldest`. It works on channel
+history only: the marker is per channel, so a thread (`--thread-ts` or a thread
+permalink) is rejected. Reading does not mark anything as read.
 
 ## `conversations get`
 
@@ -91,7 +100,9 @@ slackcli conversations unread --types=dms          # channels, dms, groups
 slackcli conversations unread --json
 ```
 
-Conversations with mentions sort first, then alphabetically. On a workspace with
+Conversations with mentions sort first, then alphabetically. With browser-session
+auth, `--json` includes each conversation's `last_read` timestamp when Slack
+sends one; pass it to `conversations read --oldest`, or use `read --unread`. On a workspace with
 many unread channels this makes one API call per channel to resolve names and
 may hit Slack rate limits.
 

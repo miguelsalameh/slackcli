@@ -13,6 +13,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Filters: `--channel` (repeatable, accepts Slack URLs), `--from` (user or bot ids), `--bots`, `--include-subtypes`; `--duration <seconds>`; `--json` for one object per line with resolved `channel_name`, `user_name`, `ts_iso`, `parent`
   - Strictly read-only — the only API methods it calls are `rtm.connect`, `conversations.info`, `users.info`, `bots.info`, and `conversations.history`, enforced by a test; unread state is never touched
   - Reconnects with backoff when the socket drops; `xoxb`/`xoxp` app tokens are refused by `rtm.connect`
+- **Read only what is unread**: `conversations read --unread` starts from your last-read marker (from `conversations.info`) instead of a hand-picked `--oldest`. Channel history only; rejected with `--oldest` or a thread
+- `conversations unread --json` includes each conversation's `last_read` timestamp (browser-session auth)
+- **Opt out of the update check**: set `SLACKCLI_NO_UPDATE_CHECK=1` to skip the background release check and the "new version available" notice
 
 ### Fixed
 - **Slack API calls are throttled**: every request now goes through a process-wide rate limiter — at most 2 in flight, with at least 200ms between calls — for both standard and browser-session authentication (#147)
